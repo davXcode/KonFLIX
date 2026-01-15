@@ -16,15 +16,69 @@ export default function Detail() {
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<'quality' | 'subtitle'>('quality'); // Tab di menu settings
 
+  // EPISODE
+  const [seasons, setSeasons] = useState<any[]>([]);
+  const [activeSeason, setActiveSeason] = useState(1);
+  const [activeEpisode, setActiveEpisode] = useState<number | null>(null);
+
+  const loadEpisode = async (season: number, episode: number) => {
+    if (!id) return;
+
+    setActiveSeason(season);
+    setActiveEpisode(episode);
+
+    setStreamUrl('');
+    setSources([]);
+    setCaptions([]);
+
+    const res = await getSources(id, season, episode);
+
+    setSources(res.data.processedSources || []);
+    setCaptions(res.data.captions || []);
+
+    if (res.data.processedSources?.length) {
+      const best =
+        res.data.processedSources[res.data.processedSources.length - 1];
+      const stream = await generateStream(best.directUrl);
+      setStreamUrl(stream.data.streamUrl);
+    }
+
+    setTimeout(() => {
+      document.getElementById('player')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
+  // useEffect(() => {
+  //   if (!id) return;
+  //   setIsLoading(true);
+
+  //   Promise.all([getDetail(id), getSources(id)]).then(
+  //     ([detailRes, sourceRes]) => {
+  //       setDetail(detailRes.data.subject);
+  //       setSources(sourceRes.data.processedSources || []);
+  //       setCaptions(sourceRes.data.captions || []); // Simpan subtitle dari API
+  //       setIsLoading(false);
+  //     }
+  //   );
+  // }, [id]);
+
   useEffect(() => {
     if (!id) return;
+
     setIsLoading(true);
 
     Promise.all([getDetail(id), getSources(id)]).then(
       ([detailRes, sourceRes]) => {
-        setDetail(detailRes.data.subject);
+        const subject = detailRes.data.subject;
+        setDetail(subject);
+
+        // Series?
+        if (detailRes.data.resource?.seasons) {
+          setSeasons(detailRes.data.resource.seasons);
+        }
+
         setSources(sourceRes.data.processedSources || []);
-        setCaptions(sourceRes.data.captions || []); // Simpan subtitle dari API
+        setCaptions(sourceRes.data.captions || []);
         setIsLoading(false);
       }
     );
@@ -251,6 +305,40 @@ export default function Detail() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* EPISODE LIST */}
+      {seasons.length > 0 && (
+        <div className="px-8 md:px-16 mt-8">
+          <h2 className="text-xl font-bold mb-4">Episodes</h2>
+
+          {seasons.map((s) => (
+            <div key={s.se} className="mb-6">
+              <h3 className="text-lg font-bold mb-3">Season {s.se}</h3>
+
+              <div className="grid grid-cols-6 md:grid-cols-10 gap-3">
+                {Array.from({ length: s.maxEp }).map((_, i) => {
+                  const ep = i + 1;
+                  const active = activeSeason === s.se && activeEpisode === ep;
+
+                  return (
+                    <button
+                      key={ep}
+                      onClick={() => loadEpisode(s.se, ep)}
+                      className={`p-3 rounded-lg text-sm font-bold transition ${
+                        active
+                          ? 'bg-red-600 text-white'
+                          : 'bg-white/10 hover:bg-white/20'
+                      }`}
+                    >
+                      EP {ep}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
