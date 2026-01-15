@@ -72,9 +72,13 @@ export default function Detail() {
         const subject = detailRes.data.subject;
         setDetail(subject);
 
-        // Series?
+        // // Series?
         if (detailRes.data.resource?.seasons) {
-          setSeasons(detailRes.data.resource.seasons);
+          const validSeasons = detailRes.data.resource.seasons.filter(
+            (s: any) => s.se > 0 && s.maxEp > 0
+          );
+
+          setSeasons(validSeasons);
         }
 
         setSources(sourceRes.data.processedSources || []);
