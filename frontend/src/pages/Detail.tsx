@@ -1,49 +1,291 @@
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { getDetail, getSources, generateStream } from '../services/api';
+import { Play, Info, Settings, Star, Calendar, Globe } from 'lucide-react';
 
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { getDetail, getSources, generateStream } from "../services/api";
+import { Languages } from 'lucide-react'; // Tambah ikon baru
 
 export default function Detail() {
   const { id } = useParams();
   const [detail, setDetail] = useState<any>(null);
   const [sources, setSources] = useState<any[]>([]);
-  const [streamUrl, setStreamUrl] = useState<string>("");
+  const [captions, setCaptions] = useState<any[]>([]); // State untuk subtitle
+  const [streamUrl, setStreamUrl] = useState<string>('');
+  const [activeSubtitle, setActiveSubtitle] = useState<string>('en'); // Default English
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<'quality' | 'subtitle'>('quality'); // Tab di menu settings
 
   useEffect(() => {
     if (!id) return;
-    getDetail(id).then(res => setDetail(res.data.subject));
-    getSources(id).then(res => setSources(res.data.processedSources || []));
+    setIsLoading(true);
+
+    Promise.all([getDetail(id), getSources(id)]).then(
+      ([detailRes, sourceRes]) => {
+        setDetail(detailRes.data.subject);
+        setSources(sourceRes.data.processedSources || []);
+        setCaptions(sourceRes.data.captions || []); // Simpan subtitle dari API
+        setIsLoading(false);
+      }
+    );
   }, [id]);
 
-  const play = async (url: string) => {
-    const res = await generateStream(url);
-    setStreamUrl(res.data.streamUrl);
+  const handleAutoPlay = async () => {
+    if (sources.length > 0) {
+      // Ambil kualitas tertinggi (biasanya 1080p ada di index terakhir atau pertama tergantung API)
+      // Kita asumsikan index terakhir adalah kualitas terbaik
+      const bestSource = sources[sources.length - 1];
+      const res = await generateStream(bestSource.directUrl);
+      setStreamUrl(res.data.streamUrl);
+
+      setTimeout(() => {
+        document
+          .getElementById('player')
+          ?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
   };
 
-  if (!detail) return <div className="pt-24 p-6">Loading...</div>;
+  const changeQuality = async (url: string) => {
+    const res = await generateStream(url);
+    setStreamUrl(res.data.streamUrl);
+    setShowSettings(false);
+  };
+
+  // Fungsi untuk memproses URL subtitle agar bisa dibaca browser
+  const getVttUrl = (srtUrl: string) => {
+    if (!srtUrl) return '';
+    // Trik: Banyak penyedia subtitle Moviebox mendukung konversi otomatis
+    // hanya dengan mengganti extension .srt menjadi .vtt di URL
+    let vttUrl = srtUrl.replace('.srt', '.vtt');
+
+    // Jika URL mengandung parameter Policy/Signature (AWS S3), pastikan penggantian extension tidak merusak query string
+    if (vttUrl.includes('?')) {
+      const [base, query] = vttUrl.split('?');
+      vttUrl = base.replace('.srt', '.vtt') + '?' + query;
+    }
+
+    return vttUrl;
+  };
+
+  if (isLoading)
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#141414]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-red-600"></div>
+      </div>
+    );
 
   return (
-    <div className="pt-24 p-6">
-      <div className="flex gap-8">
-        <img src={detail.cover.url} className="h-[400px] rounded" />
-        <div>
-          <h1 className="text-4xl font-bold mb-4">{detail.title}</h1>
-          <p className="mb-4">{detail.description}</p>
-          <div className="flex gap-2">
-            {sources.map(s => (
-              <button key={s.id} onClick={() => play(s.directUrl)} className="bg-red-600 px-4 py-2 rounded">
-                {s.quality}p
-              </button>
-            ))}
+    <div className="min-h-screen bg-[#141414] text-white pb-20">
+      {/* 1. HERO BACKDROP SECTION */}
+      <div className="relative h-[60vh] md:h-[80vh] w-full overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-700 scale-105"
+          style={{ backgroundImage: `url(${detail.cover.url})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#141414] via-[#141414]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent" />
+
+        <div className="absolute bottom-0 left-0 px-8 md:px-16 pb-12 z-10 max-w-4xl">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="flex items-center gap-1 text-yellow-500 font-bold bg-black/40 px-3 py-1 rounded-full backdrop-blur-md">
+              <Star size={16} fill="currentColor" />{' '}
+              {detail.imdbRatingValue || 'N/A'}
+            </span>
+            <span className="flex items-center gap-1 text-gray-300">
+              <Calendar size={16} /> {detail.releaseDate?.split('-')[0]}
+            </span>
+            <span className="flex items-center gap-1 text-gray-300">
+              <Globe size={16} /> {detail.countryName}
+            </span>
+          </div>
+
+          <h1 className="text-5xl md:text-7xl font-black mb-6 uppercase italic tracking-tighter drop-shadow-2xl">
+            {detail.title}
+          </h1>
+
+          <p className="text-gray-300 text-lg mb-8 line-clamp-3 md:line-clamp-none max-w-2xl leading-relaxed">
+            {detail.description}
+          </p>
+
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={handleAutoPlay}
+              className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-full font-bold text-lg transition-all shadow-xl active:scale-95"
+            >
+              <Play fill="currentColor" size={24} /> WATCH NOW
+            </button>
+            <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold transition-all border border-white/10">
+              <Info size={24} /> MY LIST
+            </button>
           </div>
         </div>
       </div>
 
+      {/* 2. VIDEO PLAYER SECTION */}
       {streamUrl && (
-        <div className="mt-8">
-          <video src={streamUrl} controls className="w-full max-w-5xl" />
+        <div id="player" className="px-8 md:px-16 mt-8 animate-fade-in">
+          <div className="relative group max-w-6xl mx-auto rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.2)] border border-white/5 bg-black">
+            <video
+              key={streamUrl + activeSubtitle} // Re-render video saat source atau sub berubah
+              controls
+              autoPlay
+              className="w-full aspect-video"
+              crossOrigin="anonymous" // PENTING: Agar browser diizinkan mengambil file subtitle (CORS)
+            >
+              <source src={streamUrl} type="video/mp4" />
+
+              {/* {captions.map((cap) => (
+                <track
+                  key={cap.id}
+                  src={getVttUrl(cap.url)} // Gunakan URL yang sudah diproses
+                  kind="subtitles"
+                  srcLang={cap.lan}
+                  label={cap.lanName}
+                  default={cap.lan === activeSubtitle}
+                />
+              ))} */}
+              {captions.map((cap) => {
+                return (
+                  <track
+                    key={cap.id}
+                    // src={getVttUrl(cap.url)}
+                    src={`http://localhost:3000/api/subtitle?url=${encodeURIComponent(
+                      cap.url
+                    )}`}
+                    kind="subtitles"
+                    srcLang={cap.lan}
+                    label={cap.lanName}
+                    default={cap.lan === activeSubtitle}
+                  />
+                );
+              })}
+            </video>
+
+            {/* SETTINGS UI */}
+            <div className="absolute top-4 right-4 z-30">
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="p-3 bg-black/60 backdrop-blur-md rounded-full hover:bg-red-600 transition-all border border-white/10"
+              >
+                <Settings
+                  size={20}
+                  className={
+                    showSettings ? 'rotate-90 transition-transform' : ''
+                  }
+                />
+              </button>
+
+              {showSettings && (
+                <div className="absolute right-0 mt-2 w-64 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
+                  {/* Tab Header */}
+                  <div className="flex border-b border-white/5">
+                    <button
+                      onClick={() => setActiveTab('quality')}
+                      className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'quality'
+                          ? 'text-red-600 border-b-2 border-red-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      Quality
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('subtitle')}
+                      className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'subtitle'
+                          ? 'text-red-600 border-b-2 border-red-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      Subtitles
+                    </button>
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="max-h-60 overflow-y-auto no-scrollbar">
+                    {activeTab === 'quality' ? (
+                      <div className="p-2">
+                        {sources.map((s) => (
+                          <button
+                            key={s.id}
+                            onClick={() => changeQuality(s.directUrl)}
+                            className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 rounded-lg transition-colors flex justify-between items-center group"
+                          >
+                            <span className="group-hover:text-red-500 font-medium">
+                              {s.quality}p
+                            </span>
+                            {streamUrl.includes(s.directUrl) && (
+                              <div className="w-2 h-2 bg-red-600 rounded-full" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-2">
+                        {captions.map((cap) => (
+                          <button
+                            key={cap.id}
+                            onClick={() => {
+                              setActiveSubtitle(cap.lan);
+                              // Untuk native video tag, perubahan track default butuh re-load atau manual selection
+                              setShowSettings(false);
+                            }}
+                            className="w-full text-left px-4 py-3 text-sm hover:bg-white/5 rounded-lg transition-colors flex justify-between items-center group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Languages size={14} className="text-gray-500" />
+                              <span className="group-hover:text-red-500">
+                                {cap.lanName}
+                              </span>
+                            </div>
+                            {activeSubtitle === cap.lan && (
+                              <div className="w-2 h-2 bg-red-600 rounded-full" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
+
+      {/* 3. ADDITIONAL INFO */}
+      <div className="px-8 md:px-16 mt-16 grid md:grid-cols-3 gap-12">
+        <div className="md:col-span-2">
+          <h3 className="text-xl font-bold mb-4 text-red-600 uppercase tracking-widest">
+            Storyline
+          </h3>
+          <p className="text-gray-400 leading-loose text-lg italic">
+            "{detail.description}"
+          </p>
+        </div>
+        <div className="bg-[#1a1a1a] p-8 rounded-2xl border border-white/5">
+          <h3 className="text-xl font-bold mb-6">Details</h3>
+          <div className="space-y-4">
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+              <span className="text-gray-500">Genres</span>
+              <span className="text-gray-200">{detail.genre}</span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+              <span className="text-gray-500">Subtitles</span>
+              <span className="text-gray-200 truncate ml-4 max-w-[150px]">
+                {detail.subtitles}
+              </span>
+            </div>
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+              <span className="text-gray-500">Rating</span>
+              <span className="text-yellow-500 font-bold">
+                {detail.imdbRatingValue} / 10
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
