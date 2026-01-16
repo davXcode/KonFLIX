@@ -48,36 +48,23 @@ export default function Detail() {
     }, 100);
   };
 
-  // useEffect(() => {
-  //   if (!id) return;
-  //   setIsLoading(true);
-
-  //   Promise.all([getDetail(id), getSources(id)]).then(
-  //     ([detailRes, sourceRes]) => {
-  //       setDetail(detailRes.data.subject);
-  //       setSources(sourceRes.data.processedSources || []);
-  //       setCaptions(sourceRes.data.captions || []); // Simpan subtitle dari API
-  //       setIsLoading(false);
-  //     }
-  //   );
-  // }, [id]);
-
   useEffect(() => {
     if (!id) return;
 
     setIsLoading(true);
 
+    // Promise.all([getDetail(id), getSources(id)]).then(
     Promise.all([getDetail(id), getSources(id)]).then(
       ([detailRes, sourceRes]) => {
         const subject = detailRes.data.subject;
         setDetail(subject);
 
-        // // Series?
+        setStars(detailRes.data.stars || []); // ✅ TAMBAH INI
+
         if (detailRes.data.resource?.seasons) {
           const validSeasons = detailRes.data.resource.seasons.filter(
             (s: any) => s.se > 0 && s.maxEp > 0
           );
-
           setSeasons(validSeasons);
         }
 
@@ -86,6 +73,25 @@ export default function Detail() {
         setIsLoading(false);
       }
     );
+
+    //   ([detailRes, sourceRes]) => {
+    //     const subject = detailRes.data.subject;
+    //     setDetail(subject);
+
+    //     // // Series?
+    //     if (detailRes.data.resource?.seasons) {
+    //       const validSeasons = detailRes.data.resource.seasons.filter(
+    //         (s: any) => s.se > 0 && s.maxEp > 0
+    //       );
+
+    //       setSeasons(validSeasons);
+    //     }
+
+    //     setSources(sourceRes.data.processedSources || []);
+    //     setCaptions(sourceRes.data.captions || []);
+    //     setIsLoading(false);
+    //   }
+    // );
   }, [id]);
 
   const handleAutoPlay = async () => {
@@ -110,21 +116,7 @@ export default function Detail() {
     setShowSettings(false);
   };
 
-  // Fungsi untuk memproses URL subtitle agar bisa dibaca browser
-  const getVttUrl = (srtUrl: string) => {
-    if (!srtUrl) return '';
-    // Trik: Banyak penyedia subtitle Moviebox mendukung konversi otomatis
-    // hanya dengan mengganti extension .srt menjadi .vtt di URL
-    let vttUrl = srtUrl.replace('.srt', '.vtt');
-
-    // Jika URL mengandung parameter Policy/Signature (AWS S3), pastikan penggantian extension tidak merusak query string
-    if (vttUrl.includes('?')) {
-      const [base, query] = vttUrl.split('?');
-      vttUrl = base.replace('.srt', '.vtt') + '?' + query;
-    }
-
-    return vttUrl;
-  };
+  const [stars, setStars] = useState<any[]>([]);
 
   if (isLoading)
     return (
@@ -179,6 +171,57 @@ export default function Detail() {
           </div>
         </div>
       </div>
+      {/* CAST - HOVER POPUP */}
+      {stars.length > 0 && (
+        <div className="px-8 md:px-16 mt-12">
+          <h3 className="text-lg font-bold mb-4 text-red-600 uppercase tracking-widest">
+            Cast
+          </h3>
+
+          <div className="flex flex-wrap gap-4">
+            {stars.map((star) => (
+              <div key={star.staffId} className="relative group">
+                {/* Trigger */}
+                <div className="flex items-center gap-2 cursor-pointer">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                    <img
+                      src={
+                        star.avatarUrl ||
+                        'https://ui-avatars.com/api/?size=128&name=' +
+                          encodeURIComponent(star.name)
+                      }
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm text-gray-300 group-hover:text-red-500 transition">
+                    {star.name}
+                  </span>
+                </div>
+
+                {/* Popup */}
+                <div className="absolute left-0 top-full mt-2 w-56 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-xl p-3 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all z-50">
+                  <div className="flex gap-3">
+                    <img
+                      src={
+                        star.avatarUrl ||
+                        'https://ui-avatars.com/api/?size=256&name=' +
+                          encodeURIComponent(star.name)
+                      }
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                    <div>
+                      <div className="font-bold text-sm">{star.name}</div>
+                      <div className="text-xs text-gray-400">
+                        as {star.character}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 2. VIDEO PLAYER SECTION */}
       {streamUrl && (
@@ -193,24 +236,10 @@ export default function Detail() {
             >
               <source src={streamUrl} type="video/mp4" />
 
-              {/* {captions.map((cap) => (
-                <track
-                  key={cap.id}
-                  src={getVttUrl(cap.url)} // Gunakan URL yang sudah diproses
-                  kind="subtitles"
-                  srcLang={cap.lan}
-                  label={cap.lanName}
-                  default={cap.lan === activeSubtitle}
-                />
-              ))} */}
               {captions.map((cap) => {
                 return (
                   <track
                     key={cap.id}
-                    // src={getVttUrl(cap.url)}
-                    // src={`http://localhost:3000/api/subtitle?url=${encodeURIComponent(
-                    //   cap.url
-                    // )}`}
                     src={`${
                       import.meta.env.VITE_BASE_URL
                     }/api/subtitle?url=${encodeURIComponent(cap.url)}`}
@@ -366,12 +395,25 @@ export default function Detail() {
               <span className="text-gray-500">Genres</span>
               <span className="text-gray-200">{detail.genre}</span>
             </div>
-            <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
+            <div className="flex justify-between border-b border-white/5 pb-2 text-sm relative group">
               <span className="text-gray-500">Subtitles</span>
-              <span className="text-gray-200 truncate ml-4 max-w-[150px]">
+
+              {/* Text (truncate) */}
+              <span className="text-gray-200 truncate ml-4 max-w-[150px] cursor-pointer">
                 {detail.subtitles}
               </span>
+
+              {/* Hover Popup */}
+              <div className="absolute right-0 top-full mt-2 max-w-sm bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-3 text-xs text-gray-200 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all z-50">
+                <div className="font-semibold mb-1 text-red-500">
+                  Available Subtitles
+                </div>
+                <div className="leading-relaxed break-words">
+                  {detail.subtitles}
+                </div>
+              </div>
             </div>
+
             <div className="flex justify-between border-b border-white/5 pb-2 text-sm">
               <span className="text-gray-500">Rating</span>
               <span className="text-yellow-500 font-bold">
