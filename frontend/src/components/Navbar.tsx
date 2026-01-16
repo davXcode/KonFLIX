@@ -28,9 +28,9 @@ export default function Navbar() {
           <Link to="/" className="hover:text-red-500 transition">
             Home
           </Link>
-          <Link to="/movie" className="hover:text-red-500 transition">
+          {/* <Link to="/movie" className="hover:text-red-500 transition">
             Movie
-          </Link>
+          </Link> */}
           <Link to="/browse" className="hover:text-red-500 transition">
             Browse
           </Link>
@@ -43,9 +43,9 @@ export default function Navbar() {
           <Link to="/shorts" className="hover:text-red-500 transition">
             Shorts
           </Link>
-          <Link to="/live" className="hover:text-red-500 transition">
+          {/* <Link to="/live" className="hover:text-red-500 transition">
             Live Sport
-          </Link>
+          </Link> */}
         </div>
       </div>
 
