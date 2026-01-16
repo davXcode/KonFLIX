@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getDetail, getSources, generateStream } from '../services/api';
+import {
+  getDetail,
+  getSources,
+  generateStream,
+  getSimilar,
+} from '../services/api';
 import { Play, Info, Settings, Star, Calendar, Globe } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import { Languages } from 'lucide-react'; // Tambah ikon baru
 
@@ -16,6 +22,7 @@ export default function Detail() {
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<'quality' | 'subtitle'>('quality'); // Tab di menu settings
   const [showTrailer, setShowTrailer] = useState(false);
+  const [similar, setSimilar] = useState<any[]>([]);
 
   // EPISODE
   const [seasons, setSeasons] = useState<any[]>([]);
@@ -53,9 +60,8 @@ export default function Detail() {
     if (!id) return;
 
     setIsLoading(true);
-
-    Promise.all([getDetail(id), getSources(id)]).then(
-      ([detailRes, sourceRes]) => {
+    Promise.all([getDetail(id), getSources(id), getSimilar(id)]).then(
+      ([detailRes, sourceRes, similarRes]) => {
         const subject = detailRes.data.subject;
         setDetail(subject);
 
@@ -70,9 +76,20 @@ export default function Detail() {
 
         setSources(sourceRes.data.processedSources || []);
         setCaptions(sourceRes.data.captions || []);
+
+        setSimilar(
+          (similarRes.data.data.items || []).filter(
+            (i: any) => i.subjectId !== id
+          )
+        );
+
         setIsLoading(false);
       }
     );
+  }, [id]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
 
   const handleAutoPlay = async () => {
@@ -431,6 +448,36 @@ export default function Detail() {
           </div>
         </div>
       </div>
+
+      {/* SIMILAR / MORE LIKE THIS */}
+      {similar.length > 0 && (
+        <div className="px-8 md:px-16 mt-16">
+          <h3 className="text-xl font-bold mb-4 text-red-600 uppercase tracking-widest">
+            More Like This
+          </h3>
+
+          <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+            {similar.map((m) => (
+              <Link
+                key={m.subjectId}
+                to={`/detail/${m.subjectId}`}
+                className="min-w-[160px] w-[160px] shrink-0 group"
+              >
+                <div className="aspect-[2/3] rounded-xl overflow-hidden border border-white/10">
+                  <img
+                    src={m.cover?.url}
+                    className="w-full h-full object-cover group-hover:scale-105 transition"
+                  />
+                </div>
+                <p className="mt-2 text-sm font-semibold truncate">{m.title}</p>
+                <p className="text-xs text-gray-400">
+                  ⭐ {m.imdbRatingValue || 'N/A'}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

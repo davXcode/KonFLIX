@@ -43,6 +43,39 @@ export class AppController {
   }
 
   // ==========================
+  // 🎬 SIMILAR MOVIES
+  // ==========================
+  @Get('moviebox/detail-rec')
+  async similar(
+    @Query('subjectId') subjectId: string,
+    @Query('page') page = '1',
+    @Query('perPage') perPage = '12',
+    @Res() res: Response
+  ) {
+    try {
+      if (!subjectId) {
+        return res.status(400).json({ message: 'Missing subjectId' });
+      }
+
+      const url = `https://h5-api.aoneroom.com/wefeed-h5api-bff/subject/detail-rec?subjectId=${subjectId}&page=${page}&perPage=${perPage}`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Referer: 'https://h5.aoneroom.com',
+          Origin: 'https://h5.aoneroom.com',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+        },
+      });
+
+      return res.json(response.data);
+    } catch (err) {
+      console.error('SIMILAR ERROR:', err.message || err);
+      return res.status(500).json({ message: 'Failed to load similar movies' });
+    }
+  }
+
+  // ==========================
   // 🌐 API PROXY
   // ==========================
   @Get('*')
