@@ -262,6 +262,10 @@ export default function CatalogPage({ title, filterType }: Props) {
                 />
               </div>
               <p className="mt-1 text-sm font-semibold truncate">{t.title}</p>
+              <p className="text-xs text-gray-400">
+                ⭐ {t.imdbRatingValue || 'N/A'} •{' '}
+                {t.releaseDate?.slice(0, 4) || '—'}
+              </p>
             </Link>
           ))}
         </motion.div>

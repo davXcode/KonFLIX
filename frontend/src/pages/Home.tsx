@@ -98,20 +98,6 @@ export default function Home() {
     });
   }, []);
 
-  // useEffect(() => {
-  //   getHomepage().then((res) => {
-  //     const items = res.data?.operatingList?.[0]?.banner?.items || [];
-  //     setBanners(items); // Simpan semua item banner
-  //     setPlatforms(res.data?.platformList || []);
-  //   });
-
-  //   getTrending().then((res) => {
-  //     const data = res.data.subjectList || [];
-  //     setTrending(data);
-  //     setFilteredTrending(data);
-  //   });
-  // }, []);
-
   // --- LOGIKA AUTO PLAY BANNER ---
   useEffect(() => {
     if (banners.length > 0) {
@@ -149,20 +135,6 @@ export default function Home() {
   const currentBanner = banners[currentIndex];
 
   const top10Ref = useRef<HTMLDivElement>(null);
-
-  const scrollHorizontal = (
-    ref: React.RefObject<HTMLDivElement>,
-    direction: 'left' | 'right'
-  ) => {
-    if (ref.current) {
-      const { scrollLeft, clientWidth } = ref.current;
-      const scrollTo =
-        direction === 'left'
-          ? scrollLeft - clientWidth * 0.8
-          : scrollLeft + clientWidth * 0.8;
-      ref.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
-    }
-  };
 
   if (isLoading)
     return (
@@ -373,13 +345,20 @@ export default function Home() {
                   {/* Overlay info saat di hover (Biar Rame) */}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity flex flex-col justify-end p-4">
                     <p className="text-xs font-bold text-yellow-500 mb-1">
-                      ⭐ {t.imdbRatingValue || 'N/A'}
+                      {/* ⭐ {t.imdbRatingValue || 'N/A'} */}
+                      {currentBanner.subject.genre.replace(',', ' • ')}
                     </p>
                     <p className="text-[10px] line-clamp-2 text-gray-200 leading-tight">
-                      {t.title}
+                      {currentBanner.subject.description}
                     </p>
                   </div>
                 </div>
+                <p className="mt-1 text-sm font-semibold truncate">{t.title}</p>
+
+                <p className="text-xs text-gray-400">
+                  ⭐ {t.imdbRatingValue || 'N/A'} •{' '}
+                  {t.releaseDate?.slice(0, 4) || '—'}
+                </p>
               </Link>
             ))
           ) : (
@@ -426,17 +405,31 @@ export default function Home() {
                   {idx + 1}
                 </span>
 
-                <div className="ml-10 aspect-[2/3] rounded-md overflow-hidden shadow-2xl relative z-10 transition-transform duration-300 group-hover/top:-translate-y-4">
-                  <img
-                    src={t.cover.url}
-                    alt={t.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-0 right-0 p-2">
-                    <span className="bg-red-600 text-[10px] font-bold px-2 py-1 rounded-sm shadow-lg">
-                      TOP 10
-                    </span>
+                <div className="ml-10 relative z-10 transition-transform duration-300 group-hover/top:-translate-y-4">
+                  {/* WRAPPER GAMBAR */}
+                  <div className="aspect-[2/3] rounded-md overflow-hidden shadow-2xl relative">
+                    <img
+                      src={t.cover.url}
+                      alt={t.title}
+                      className="w-full h-full object-cover"
+                    />
+
+                    <div className="absolute top-0 right-0 p-2">
+                      <span className="bg-red-600 text-[10px] font-bold px-2 py-1 rounded-sm shadow-lg">
+                        TOP 10
+                      </span>
+                    </div>
                   </div>
+
+                  {/* TEKS DI BAWAH GAMBAR */}
+                  <p className="mt-2 text-sm font-semibold truncate">
+                    {t.title}
+                  </p>
+
+                  <p className="text-xs text-gray-400">
+                    ⭐ {t.imdbRatingValue || 'N/A'} •{' '}
+                    {t.releaseDate?.slice(0, 4) || '—'}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -449,19 +442,24 @@ export default function Home() {
         <div className="bg-gradient-to-r from-red-900/40 to-black p-8 md:p-16 rounded-3xl border border-red-500/20 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
             <h2 className="text-3xl md:text-5xl font-black mb-4 uppercase italic">
-              Ready to dive in?
+              Mau nonton drama china?
             </h2>
-            <p className="text-gray-400 text-lg">
-              Download our mobile app for better experience and offline viewing.
-            </p>
+            <p className="text-gray-400 text-lg">kualitas rata kanan</p>
           </div>
           <div className="flex gap-4">
-            <button className="bg-white text-black font-bold px-8 py-4 rounded-full hover:bg-gray-200 transition-all shadow-xl uppercase tracking-tighter">
-              Get Mobile App
-            </button>
-            <button className="border border-white/20 font-bold px-8 py-4 rounded-full hover:bg-white/10 transition-all uppercase tracking-tighter">
-              Learn More
-            </button>
+            <a
+              href="https://dracin-bay.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <button className="bg-white text-black font-bold px-8 py-4 rounded-full hover:bg-gray-200 transition-all shadow-xl uppercase tracking-tighter">
+                Tonton
+              </button>
+            </a>
+
+            {/* <button className="border border-white/20 font-bold px-8 py-4 rounded-full hover:bg-white/10 transition-all uppercase tracking-tighter">
+              buka
+            </button> */}
           </div>
         </div>
       </div>
