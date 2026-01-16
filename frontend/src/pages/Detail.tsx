@@ -208,9 +208,12 @@ export default function Detail() {
                   <track
                     key={cap.id}
                     // src={getVttUrl(cap.url)}
-                    src={`http://localhost:3000/api/subtitle?url=${encodeURIComponent(
-                      cap.url
-                    )}`}
+                    // src={`http://localhost:3000/api/subtitle?url=${encodeURIComponent(
+                    //   cap.url
+                    // )}`}
+                    src={`${
+                      import.meta.env.VITE_BASE_URL
+                    }/api/subtitle?url=${encodeURIComponent(cap.url)}`}
                     kind="subtitles"
                     srcLang={cap.lan}
                     label={cap.lanName}
