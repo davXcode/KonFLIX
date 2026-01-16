@@ -9,6 +9,7 @@ import Movies from './pages/Movies';
 import Series from './pages/Series';
 import Shorts from './pages/Shorts';
 import LiveSport from './pages/LiveSport';
+import CatalogPage from './components/CatalogPage';
 
 export default function App() {
   return (
@@ -19,11 +20,21 @@ export default function App() {
         <Route path="/movie" element={<Movie />} />
         <Route path="/detail/:id" element={<Detail />} />
         <Route path="/search" element={<Search />} />
+
+        {/* Generic browse pages */}
         <Route path="/browse" element={<Browse />} />
         <Route path="/movies" element={<Movies />} />
         <Route path="/series" element={<Series />} />
         <Route path="/shorts" element={<Shorts />} />
         <Route path="/live" element={<LiveSport />} />
+
+        {/* Category pages using CatalogPage */}
+        <Route path="/kdrama" element={<CatalogPage title="K-Drama" />} />
+        <Route path="/cdrama" element={<CatalogPage title="C-Drama" />} />
+        <Route path="/thai" element={<CatalogPage title="Thai Drama" />} />
+        <Route path="/jdrama" element={<CatalogPage title="J-Drama" />} />
+        <Route path="/western" element={<CatalogPage title="Western" />} />
+        <Route path="/anime" element={<CatalogPage title="Anime" />} />
       </Routes>
     </div>
   );
