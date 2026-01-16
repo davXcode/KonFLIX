@@ -3,7 +3,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Detail from './pages/Detail';
 import Search from './pages/Search';
-import Movie from './pages/movie';
+import Movie from './pages/Movie';
 import Browse from './pages/Browse';
 import Movies from './pages/Movies';
 import Series from './pages/Series';
