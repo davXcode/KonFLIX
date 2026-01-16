@@ -218,6 +218,7 @@ export default function Detail() {
               autoPlay
               className="w-full aspect-video"
               crossOrigin="anonymous" // PENTING: Agar browser diizinkan mengambil file subtitle (CORS)
+              controlsList="nodownload"
             >
               <source src={streamUrl} type="video/mp4" />
 
