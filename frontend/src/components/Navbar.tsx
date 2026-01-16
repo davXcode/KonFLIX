@@ -28,8 +28,23 @@ export default function Navbar() {
           <Link to="/" className="hover:text-red-500 transition">
             Home
           </Link>
-          <Link to="/search" className="hover:text-red-500 transition">
+          <Link to="/movie" className="hover:text-red-500 transition">
+            Movie
+          </Link>
+          <Link to="/browse" className="hover:text-red-500 transition">
+            Browse
+          </Link>
+          <Link to="/movies" className="hover:text-red-500 transition">
             Movies
+          </Link>
+          <Link to="/series" className="hover:text-red-500 transition">
+            Series
+          </Link>
+          <Link to="/shorts" className="hover:text-red-500 transition">
+            Shorts
+          </Link>
+          <Link to="/live" className="hover:text-red-500 transition">
+            Live Sport
           </Link>
         </div>
       </div>
