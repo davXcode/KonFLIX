@@ -1,7 +1,10 @@
 import { Controller, Get, Req, Res, Query } from '@nestjs/common';
 import axios from 'axios';
 import { Response } from 'express';
-import * as srt2vtt from 'srt-to-vtt';
+// import * as srt2vtt from 'srt-to-vtt';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const srt2vtt = require('srt-to-vtt');
+
 import { Readable } from 'stream';
 
 const BASE = 'https://api.sansekai.my.id/api';
@@ -11,34 +14,6 @@ export class AppController {
   // ==========================
   // 🔥 SUBTITLE CONVERTER PROXY
   // ==========================
-  // @Get('subtitle')
-  // async subtitle(@Query('url') url: string, @Res() res: Response) {
-  //   try {
-  //     if (!url) {
-  //       return res.status(400).send('Missing url');
-  //     }
-
-  //     const response = await axios.get(url, {
-  //       responseType: 'arraybuffer',
-  //       headers: {
-  //         'User-Agent':
-  //           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
-  //         Referer: 'https://www.google.com',
-  //       },
-  //     });
-
-  //     const srtBuffer = Buffer.from(response.data);
-
-  //     res.setHeader('Content-Type', 'text/vtt');
-
-  //     const stream = Readable.from(srtBuffer);
-  //     stream.pipe(srt2vtt()).pipe(res);
-  //   } catch (err) {
-  //     console.error('SUBTITLE PROXY ERROR:', err.message || err);
-  //     return res.status(500).send('Failed to load subtitle');
-  //   }
-  // }
-
   @Get('subtitle')
   async subtitle(@Query('url') url: string, @Res() res: Response) {
     try {
@@ -46,27 +21,23 @@ export class AppController {
         return res.status(400).send('Missing url');
       }
 
-      const response = await fetch(url, {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
         headers: {
-          'User-Agent': 'Mozilla/5.0',
-          Accept: '*/*',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+          Referer: 'https://www.google.com',
         },
       });
 
-      if (!response.ok) {
-        console.error('FETCH SUB FAILED:', response.status);
-        return res.status(500).send('Failed to fetch subtitle');
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const srtBuffer = Buffer.from(arrayBuffer);
+      const srtBuffer = Buffer.from(response.data);
 
       res.setHeader('Content-Type', 'text/vtt');
 
       const stream = Readable.from(srtBuffer);
       stream.pipe(srt2vtt()).pipe(res);
     } catch (err) {
-      console.error('SUBTITLE PROXY ERROR:', err);
+      console.error('SUBTITLE PROXY ERROR:', err.message || err);
       return res.status(500).send('Failed to load subtitle');
     }
   }
