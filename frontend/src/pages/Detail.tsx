@@ -54,13 +54,12 @@ export default function Detail() {
 
     setIsLoading(true);
 
-    // Promise.all([getDetail(id), getSources(id)]).then(
     Promise.all([getDetail(id), getSources(id)]).then(
       ([detailRes, sourceRes]) => {
         const subject = detailRes.data.subject;
         setDetail(subject);
 
-        setStars(detailRes.data.stars || []); // ✅ TAMBAH INI
+        setStars(detailRes.data.stars || []);
 
         if (detailRes.data.resource?.seasons) {
           const validSeasons = detailRes.data.resource.seasons.filter(
@@ -74,31 +73,12 @@ export default function Detail() {
         setIsLoading(false);
       }
     );
-
-    //   ([detailRes, sourceRes]) => {
-    //     const subject = detailRes.data.subject;
-    //     setDetail(subject);
-
-    //     // // Series?
-    //     if (detailRes.data.resource?.seasons) {
-    //       const validSeasons = detailRes.data.resource.seasons.filter(
-    //         (s: any) => s.se > 0 && s.maxEp > 0
-    //       );
-
-    //       setSeasons(validSeasons);
-    //     }
-
-    //     setSources(sourceRes.data.processedSources || []);
-    //     setCaptions(sourceRes.data.captions || []);
-    //     setIsLoading(false);
-    //   }
-    // );
   }, [id]);
 
   const handleAutoPlay = async () => {
     if (sources.length > 0) {
       // Ambil kualitas tertinggi (biasanya 1080p ada di index terakhir atau pertama tergantung API)
-      // Kita asumsikan index terakhir adalah kualitas terbaik
+      // asumsikan index terakhir adalah kualitas terbaik
       const bestSource = sources[sources.length - 1];
       const res = await generateStream(bestSource.directUrl);
       setStreamUrl(res.data.streamUrl);
@@ -158,18 +138,6 @@ export default function Detail() {
           <p className="text-gray-300 text-lg mb-8 line-clamp-3 md:line-clamp-none max-w-2xl leading-relaxed">
             {detail.description}
           </p>
-
-          {/* <div className="flex flex-wrap gap-4">
-            <button
-              onClick={handleAutoPlay}
-              className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-full font-bold text-lg transition-all shadow-xl active:scale-95"
-            >
-              <Play fill="currentColor" size={24} /> WATCH NOW
-            </button>
-            <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold transition-all border border-white/10">
-              <Info size={24} /> MY LIST
-            </button>
-          </div> */}
           <div className="flex flex-wrap gap-4">
             <button
               onClick={handleAutoPlay}
@@ -195,7 +163,6 @@ export default function Detail() {
           <h3 className="text-lg font-bold mb-4 text-red-600 uppercase tracking-widest">
             Cast
           </h3>
-
           <div className="flex flex-wrap gap-4">
             {stars.map((star) => (
               <div key={star.staffId} className="relative group">
