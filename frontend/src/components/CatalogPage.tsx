@@ -168,14 +168,14 @@ export default function CatalogPage({ title, filterType }: Props) {
               ))}
             </PillSelect>
 
-            <PillSelect value={platformFilter} onChange={setPlatformFilter}>
+            {/* <PillSelect value={platformFilter} onChange={setPlatformFilter}>
               <option value="all">All Platforms</option>
               {allPlatforms.map((p) => (
                 <option key={p} value={p}>
                   {p}
                 </option>
               ))}
-            </PillSelect>
+            </PillSelect> */}
 
             <PillSelect value={sortBy} onChange={setSortBy}>
               <option value="relevance">Relevance</option>
