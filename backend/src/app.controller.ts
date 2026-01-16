@@ -11,6 +11,34 @@ export class AppController {
   // ==========================
   // 🔥 SUBTITLE CONVERTER PROXY
   // ==========================
+  // @Get('subtitle')
+  // async subtitle(@Query('url') url: string, @Res() res: Response) {
+  //   try {
+  //     if (!url) {
+  //       return res.status(400).send('Missing url');
+  //     }
+
+  //     const response = await axios.get(url, {
+  //       responseType: 'arraybuffer',
+  //       headers: {
+  //         'User-Agent':
+  //           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
+  //         Referer: 'https://www.google.com',
+  //       },
+  //     });
+
+  //     const srtBuffer = Buffer.from(response.data);
+
+  //     res.setHeader('Content-Type', 'text/vtt');
+
+  //     const stream = Readable.from(srtBuffer);
+  //     stream.pipe(srt2vtt()).pipe(res);
+  //   } catch (err) {
+  //     console.error('SUBTITLE PROXY ERROR:', err.message || err);
+  //     return res.status(500).send('Failed to load subtitle');
+  //   }
+  // }
+
   @Get('subtitle')
   async subtitle(@Query('url') url: string, @Res() res: Response) {
     try {
@@ -18,29 +46,33 @@ export class AppController {
         return res.status(400).send('Missing url');
       }
 
-      const response = await axios.get(url, {
-        responseType: 'arraybuffer',
+      const response = await fetch(url, {
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36',
-          Referer: 'https://www.google.com',
+          'User-Agent': 'Mozilla/5.0',
+          Accept: '*/*',
         },
       });
 
-      const srtBuffer = Buffer.from(response.data);
+      if (!response.ok) {
+        console.error('FETCH SUB FAILED:', response.status);
+        return res.status(500).send('Failed to fetch subtitle');
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const srtBuffer = Buffer.from(arrayBuffer);
 
       res.setHeader('Content-Type', 'text/vtt');
 
       const stream = Readable.from(srtBuffer);
       stream.pipe(srt2vtt()).pipe(res);
     } catch (err) {
-      console.error('SUBTITLE PROXY ERROR:', err.message || err);
+      console.error('SUBTITLE PROXY ERROR:', err);
       return res.status(500).send('Failed to load subtitle');
     }
   }
 
   // ==========================
-  // 🌐 API PROXY (PUNYA KAMU)
+  // 🌐 API PROXY
   // ==========================
   @Get('*')
   async proxy(@Req() req: any, @Res() res: Response) {
