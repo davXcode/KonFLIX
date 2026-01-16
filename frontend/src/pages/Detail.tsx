@@ -15,6 +15,7 @@ export default function Detail() {
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<'quality' | 'subtitle'>('quality'); // Tab di menu settings
+  const [showTrailer, setShowTrailer] = useState(false);
 
   // EPISODE
   const [seasons, setSeasons] = useState<any[]>([]);
@@ -158,7 +159,7 @@ export default function Detail() {
             {detail.description}
           </p>
 
-          <div className="flex flex-wrap gap-4">
+          {/* <div className="flex flex-wrap gap-4">
             <button
               onClick={handleAutoPlay}
               className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-full font-bold text-lg transition-all shadow-xl active:scale-95"
@@ -168,6 +169,23 @@ export default function Detail() {
             <button className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold transition-all border border-white/10">
               <Info size={24} /> MY LIST
             </button>
+          </div> */}
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={handleAutoPlay}
+              className="flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-full font-bold text-lg transition-all shadow-xl active:scale-95"
+            >
+              <Play fill="currentColor" size={24} /> WATCH NOW
+            </button>
+
+            {detail.trailer?.videoAddress?.url && (
+              <button
+                onClick={() => setShowTrailer(true)}
+                className="flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold transition-all border border-white/10"
+              >
+                <Play size={22} /> TRAILER
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -340,6 +358,28 @@ export default function Detail() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRAILER MODAL */}
+      {showTrailer && detail.trailer?.videoAddress?.url && (
+        <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowTrailer(false)}
+              className="absolute top-3 right-3 z-10 bg-black/60 hover:bg-red-600 transition p-2 rounded-full"
+            >
+              ✕
+            </button>
+
+            <video
+              src={detail.trailer.videoAddress.url}
+              controls
+              autoPlay
+              className="w-full h-full"
+            />
           </div>
         </div>
       )}
