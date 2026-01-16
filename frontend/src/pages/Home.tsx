@@ -12,6 +12,7 @@ export default function Home() {
   const [activePlatform, setActivePlatform] = useState<string>('All');
 
   const platformRef = useRef<HTMLDivElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fungsi untuk geser manual lewat tombol
   const scroll = (direction: 'left' | 'right') => {
@@ -51,6 +52,36 @@ export default function Home() {
       trendingRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Menjalankan kedua request secara paralel
+        const [homeRes, trendingRes] = await Promise.all([
+          getHomepage(),
+          getTrending(),
+        ]);
+
+        // Handle data Homepage
+        const bannerItems =
+          homeRes.data?.operatingList?.[0]?.banner?.items || [];
+        setBanners(bannerItems);
+        setPlatforms(homeRes.data?.platformList || []);
+
+        // Handle data Trending
+        const trendingData = trendingRes.data.subjectList || [];
+        setTrending(trendingData);
+        setFilteredTrending(trendingData.slice(0, 10));
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        // Berhenti loading baik sukses maupun error (setelah sedikit delay agar smooth)
+        setTimeout(() => setIsLoading(false), 500);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     getHomepage().then((res) => {
@@ -132,6 +163,13 @@ export default function Home() {
       ref.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
     }
   };
+
+  if (isLoading)
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#141414]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-red-600"></div>
+      </div>
+    );
 
   return (
     <div className="bg-[#141414] min-h-screen text-white">
