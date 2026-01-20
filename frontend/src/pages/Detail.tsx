@@ -10,6 +10,7 @@ import { Play, Info, Settings, Star, Calendar, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Languages } from 'lucide-react'; // Tambah ikon baru
+import { supabase } from '../lib/supabase';
 
 export default function Detail() {
   const { id } = useParams();
@@ -29,8 +30,33 @@ export default function Detail() {
   const [activeSeason, setActiveSeason] = useState(1);
   const [activeEpisode, setActiveEpisode] = useState<number | null>(null);
 
+  // Save history
+  const saveHistory = async (payload?: {
+    season?: number;
+    episode?: number;
+  }) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user || !detail) return;
+
+    await supabase.from('watch_history').upsert({
+      user_id: user.id,
+      movie_id: id,
+      movie_title: detail.title,
+      poster_url: detail.cover?.url,
+      last_position: 0,
+      season: payload?.season || null,
+      episode: payload?.episode || null,
+      updated_at: new Date().toISOString(),
+    });
+  };
+
   const loadEpisode = async (season: number, episode: number) => {
     if (!id) return;
+    // 🔥 SIMPAN HISTORY
+    saveHistory({ season, episode });
 
     setActiveSeason(season);
     setActiveEpisode(episode);
@@ -69,7 +95,7 @@ export default function Detail() {
 
         if (detailRes.data.resource?.seasons) {
           const validSeasons = detailRes.data.resource.seasons.filter(
-            (s: any) => s.se > 0 && s.maxEp > 0
+            (s: any) => s.se > 0 && s.maxEp > 0,
           );
           setSeasons(validSeasons);
         }
@@ -79,12 +105,12 @@ export default function Detail() {
 
         setSimilar(
           (similarRes.data.data.items || []).filter(
-            (i: any) => i.subjectId !== id
-          )
+            (i: any) => i.subjectId !== id,
+          ),
         );
 
         setIsLoading(false);
-      }
+      },
     );
   }, [id]);
 
@@ -94,6 +120,8 @@ export default function Detail() {
 
   const handleAutoPlay = async () => {
     if (sources.length > 0) {
+      // 🔥 SIMPAN HISTORY
+      saveHistory();
       // Ambil kualitas tertinggi (biasanya 1080p ada di index terakhir atau pertama tergantung API)
       // asumsikan index terakhir adalah kualitas terbaik
       const bestSource = sources[sources.length - 1];

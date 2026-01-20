@@ -121,6 +121,9 @@ export default function Navbar() {
           <Link to="/shorts" className="hover:text-red-500 transition">
             Shorts
           </Link>
+          <Link to="/history" className="hover:text-red-500 transition">
+            History watch
+          </Link>
 
           {/* CATEGORY */}
           <div className="relative group">
