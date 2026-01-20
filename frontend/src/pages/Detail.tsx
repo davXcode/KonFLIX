@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   getDetail,
   getSources,
@@ -14,6 +14,11 @@ import { supabase } from '../lib/supabase';
 
 export default function Detail() {
   const { id } = useParams();
+
+  // Login to watch
+  const navigate = useNavigate();
+  const [authChecked, setAuthChecked] = useState(false);
+
   const [detail, setDetail] = useState<any>(null);
   const [sources, setSources] = useState<any[]>([]);
   const [captions, setCaptions] = useState<any[]>([]); // State untuk subtitle
@@ -29,6 +34,24 @@ export default function Detail() {
   const [seasons, setSeasons] = useState<any[]>([]);
   const [activeSeason, setActiveSeason] = useState(1);
   const [activeEpisode, setActiveEpisode] = useState<number | null>(null);
+
+  // 🔒 AUTH GUARD
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+
+      setAuthChecked(true);
+    };
+
+    checkAuth();
+  }, []);
 
   // Save history
   const saveHistory = async (payload?: {
@@ -143,6 +166,14 @@ export default function Detail() {
   };
 
   const [stars, setStars] = useState<any[]>([]);
+
+  if (!authChecked) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[#141414]">
+        Checking session...
+      </div>
+    );
+  }
 
   if (isLoading)
     return (
