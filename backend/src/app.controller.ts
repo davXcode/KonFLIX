@@ -1,16 +1,65 @@
-import { Controller, Get, Req, Res, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Req,
+  Res,
+  Query,
+  UseGuards,
+  Put,
+  Body,
+} from '@nestjs/common';
 import axios from 'axios';
 import { Response } from 'express';
-// import * as srt2vtt from 'srt-to-vtt';
+import { Readable } from 'stream';
+import { AuthGuard } from './auth.guard';
+import sql from './db';
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const srt2vtt = require('srt-to-vtt');
-
-import { Readable } from 'stream';
 
 const BASE = 'https://api.sansekai.my.id/api';
 
 @Controller('api')
 export class AppController {
+  // ==========================
+  // 👤 PROFILE (SUPABASE)
+  // ==========================
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req: any, @Res() res: Response) {
+    const user = req.user;
+
+    const result = await sql`
+      select id, username, avatar_url
+      from profiles
+      where id = ${user.id}
+    `;
+
+    return res.json(result[0] || null);
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('profile')
+  async updateProfile(
+    @Req() req: any,
+    @Body() body: any,
+    @Res() res: Response,
+  ) {
+    const user = req.user;
+    const { username, avatar_url } = body;
+
+    await sql`
+      insert into profiles (id, username, avatar_url)
+      values (${user.id}, ${username}, ${avatar_url})
+      on conflict (id)
+      do update set
+        username = ${username},
+        avatar_url = ${avatar_url}
+    `;
+
+    return res.json({ success: true });
+  }
+
   // ==========================
   // 🔥 SUBTITLE CONVERTER PROXY
   // ==========================
@@ -50,7 +99,7 @@ export class AppController {
     @Query('subjectId') subjectId: string,
     @Query('page') page = '1',
     @Query('perPage') perPage = '12',
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     try {
       if (!subjectId) {
@@ -76,7 +125,7 @@ export class AppController {
   }
 
   // ==========================
-  // 🌐 API PROXY
+  // 🌐 API PROXY (CATCH ALL)
   // ==========================
   @Get('*')
   async proxy(@Req() req: any, @Res() res: Response) {

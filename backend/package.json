@@ -10,7 +10,10 @@
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@supabase/supabase-js": "^2.91.0",
     "axios": "^1.6.0",
+    "dotenv": "^17.2.3",
+    "postgres": "^3.4.8",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "srt-to-vtt": "^1.1.3"

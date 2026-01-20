@@ -10,6 +10,10 @@ import Series from './pages/Series';
 import Shorts from './pages/Shorts';
 import LiveSport from './pages/LiveSport';
 import CatalogPage from './components/CatalogPage';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import Profile from './pages/Profile';
 
 export default function App() {
   return (
@@ -35,6 +39,12 @@ export default function App() {
         <Route path="/jdrama" element={<CatalogPage title="J-Drama" />} />
         <Route path="/western" element={<CatalogPage title="Western" />} />
         <Route path="/anime" element={<CatalogPage title="Anime" />} />
+
+        {/* account */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </div>
   );
